@@ -14,6 +14,10 @@ MongoConnectionManager.initialize_db()
 #import the routes
 initial_routes(app)
 
+@app.route('/')
+def index():
+    return "Welcome to Ad SDK Flask API!"
+
 
 
 if __name__ == "__main__":
