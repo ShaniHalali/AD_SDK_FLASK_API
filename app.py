@@ -14,5 +14,10 @@ initial_routes(app)
 def index():
     return "Welcome to Ad SDK Flask API!"
 
-# ⛔️ חשוב! לא צריך app.run() כשמריצים על Vercel
-# זה כן רץ מקומית, אבל לא בשירותים serverless
+
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8088))
+    app.run(debug=True , port=port, host = "0.0.0.0")
+
