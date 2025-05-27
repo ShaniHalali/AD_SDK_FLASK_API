@@ -28,6 +28,8 @@ def create_ad():
             ad_link: {type: string}
     responses:
       201: {description: Ad created successfully}
+      400: {description: Bad request, missing fields or invalid date format}
+      500: {description: Internal server error}
     """
     data = request.get_json()
     db = MongoConnectionManager.get_db()
@@ -57,7 +59,8 @@ def create_ad():
         "ad_location": data['ad_location'],
         "ad_link": data['ad_link'],
         "created_at": datetime.datetime.now(),
-        "updated_at": datetime.datetime.now()
+        "updated_at": datetime.datetime.now(),
+        "package_name": data['package_name']
     }
 
     db[data['package_name']].insert_one(ad_item)
@@ -120,7 +123,7 @@ def get_ad_by_id(package_name, ad_id):
 @ad_sdk_blueprint.route('/ad_sdk/<package_name>/<ad_id>', methods=['PUT'])
 def update_ad(package_name, ad_id):
     """
-    Update ad details by ID
+    Update ad details by ID and package name
     ---
     parameters:
       - name: package_name
