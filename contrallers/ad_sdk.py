@@ -8,49 +8,86 @@ ad_sdk_blueprint = Blueprint('ad_sdk', __name__)
 # 1. Create a new ad
 @ad_sdk_blueprint.route('/ad_sdk', methods=['POST'])
 def create_ad():
-    """Create a new ad
+    """
+    Create a new ad
     ---
     parameters:
       - name: ad
         in: body
         required: true
         schema:
-          id: Ad
-          required: [package_name, name, dicription, ad_type, beginning_date, expiration_date, ad_location, ad_link]
+          type: object
+          required:
+            - package_name
+            - name
+            - dicription
+            - ad_type
+            - beginning_date
+            - expiration_date
+            - ad_location
+            - ad_link
           properties:
-            package_name: {type: string}
-            name: {type: string}
-            dicription: {type: string}
-            ad_type: {type: string}
-            beginning_date: {type: string}
-            expiration_date: {type: string}
-            ad_location: {type: string}
-            ad_link: {type: string}
+            package_name:
+              type: string
+              description: "App package name the ad is associated with"
+            name:
+              type: string
+              description: "Name of the ad"
+            dicription:
+              type: string
+              description: "Description of the ad"
+            ad_type:
+              type: string
+              description: "Type of the ad (e.g., image, video)"
+            beginning_date:
+              type: string
+              description: "Start date of the ad (format: YYYY-MM-DD HH:MM:SS)"
+            expiration_date:
+              type: string
+              description: "End date of the ad (format: YYYY-MM-DD HH:MM:SS)"
+            ad_location:
+              type: string
+              description: "Location to target the ad"
+            ad_link:
+              type: string
+              description: "Link to the ad content"
     responses:
-      201: {description: Ad created successfully}
-      400: {description: Bad request, missing fields or invalid date format}
-      500: {description: Internal server error}
+      201:
+        description: Ad created successfully
+      400:
+        description: Bad request, missing fields or invalid date format
+      500:
+        description: Internal server error
     """
     data = request.get_json()
+
+    # Start by checking DB connection
     db = MongoConnectionManager.get_db()
     if db is None:
         return jsonify({"error": "Database connection error"}), 500
 
-    required = ['package_name', 'name', 'dicription', 'ad_type', 'beginning_date', 'expiration_date', 'ad_location', 'ad_link']
-    if not all(k in data for k in required):
+    # Required fields check
+    required_fields = [
+        'package_name', 'name', 'dicription', 'ad_type',
+        'beginning_date', 'expiration_date', 'ad_location', 'ad_link'
+    ]
+    if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
 
+    # Date parsing
     try:
         begin = datetime.datetime.strptime(data['beginning_date'], '%Y-%m-%d %H:%M:%S')
         expire = datetime.datetime.strptime(data['expiration_date'], '%Y-%m-%d %H:%M:%S')
     except ValueError:
-        return jsonify({"error": "Invalid date format"}), 400
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD HH:MM:SS"}), 400
 
     if begin > expire:
         return jsonify({"error": "Beginning date must be before expiration date"}), 400
 
+    # Create the ad item
     ad_item = {
         "_id": str(uuid.uuid4()),
+        "package_name": data['package_name'],
         "name": data['name'],
         "dicription": data['dicription'],
         "ad_type": data['ad_type'],
@@ -59,12 +96,15 @@ def create_ad():
         "ad_location": data['ad_location'],
         "ad_link": data['ad_link'],
         "created_at": datetime.datetime.now(),
-        "updated_at": datetime.datetime.now(),
-        "package_name": data['package_name']
+        "updated_at": datetime.datetime.now()
     }
 
-    db[data['package_name']].insert_one(ad_item)
-    return jsonify({"message": "Ad created successfully", "_id": ad_item["_id"]}), 201
+    # Insert into MongoDB in the correct collection
+    try:
+        db[data['package_name']].insert_one(ad_item)
+        return jsonify({"message": "Ad created successfully", "_id": ad_item["_id"]}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # 2. Get all ads for package name
