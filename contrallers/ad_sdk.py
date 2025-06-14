@@ -20,7 +20,7 @@ def create_ad():
           required:
             - package_name
             - name
-            - dicription
+            - description
             - ad_type
             - beginning_date
             - expiration_date
@@ -34,7 +34,7 @@ def create_ad():
             name:
               type: string
               description: "Name of the ad"
-            dicription:
+            description:
               type: string
               description: "Description of the ad"
             ad_type:
@@ -72,7 +72,7 @@ def create_ad():
 
     # Required fields check
     required_fields = [
-        'package_name', 'name', 'dicription', 'ad_type',
+        'package_name', 'name', 'description', 'ad_type',
         'beginning_date', 'expiration_date', 'ad_location', 'ad_link', 'ad_image_link'
     ]
     if not all(field in data for field in required_fields):
@@ -93,7 +93,7 @@ def create_ad():
         "_id": str(uuid.uuid4()),
         "package_name": data['package_name'],
         "name": data['name'],
-        "dicription": data['dicription'],
+        "description": data['description'],
         "ad_type": data['ad_type'],
         "beginning_date": begin,
         "expiration_date": expire,
