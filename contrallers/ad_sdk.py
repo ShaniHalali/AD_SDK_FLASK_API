@@ -26,6 +26,7 @@ def create_ad():
             - expiration_date
             - ad_location
             - ad_link
+            - ad_image_link
           properties:
             package_name:
               type: string
@@ -51,6 +52,9 @@ def create_ad():
             ad_link:
               type: string
               description: "Link to the ad content"
+            ad_image_link:
+              type: string
+              description: "Link to the ad url"
     responses:
       201:
         description: Ad created successfully
@@ -69,7 +73,7 @@ def create_ad():
     # Required fields check
     required_fields = [
         'package_name', 'name', 'dicription', 'ad_type',
-        'beginning_date', 'expiration_date', 'ad_location', 'ad_link'
+        'beginning_date', 'expiration_date', 'ad_location', 'ad_link', 'ad_image_link'
     ]
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
@@ -96,7 +100,8 @@ def create_ad():
         "ad_location": data['ad_location'],
         "ad_link": data['ad_link'],
         "created_at": datetime.datetime.now(),
-        "updated_at": datetime.datetime.now()
+        "updated_at": datetime.datetime.now(),
+        "ad_image_link": data['ad_image_link']
     }
 
     # Insert into MongoDB in the correct collection
@@ -185,6 +190,7 @@ def update_ad(package_name, ad_id):
             expiration_date: {type: string}
             ad_location: {type: string}
             ad_link: {type: string}
+            ad_image_link: {type: string}
     responses:
       200: {description: Ad updated}
       404: {description: Ad not found}
@@ -196,7 +202,7 @@ def update_ad(package_name, ad_id):
     data = request.get_json()
     update_fields = {}
 
-    for field in ['name', 'dicription', 'ad_type', 'ad_location', 'ad_link']:
+    for field in ['name', 'dicription', 'ad_type', 'ad_location', 'ad_link', 'ad_image_link']:
         if field in data:
             update_fields[field] = data[field]
 
@@ -211,12 +217,17 @@ def update_ad(package_name, ad_id):
     if 'beginning_date' in update_fields and 'expiration_date' in update_fields:
         if update_fields['beginning_date'] > update_fields['expiration_date']:
             return jsonify({"error": "Beginning date must be before expiration date"}), 400
+        
 
     update_fields['updated_at'] = datetime.datetime.now()
     result = db[package_name].update_one({"_id": ad_id}, {"$set": update_fields})
 
     if result.matched_count == 0:
         return jsonify({"error": "Ad not found"}), 404
+    
+    if 'ad_image_link' in update_fields and not update_fields['ad_image_link'].startswith('http'):
+        return jsonify({"error": "Invalid ad_image_link URL"}), 400
+
 
     return jsonify({"message": "Ad updated successfully", "_id": ad_id}), 200
 
