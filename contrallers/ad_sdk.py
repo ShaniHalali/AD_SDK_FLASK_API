@@ -250,11 +250,10 @@ def update_ad(package_name, ad_id):
     return jsonify({"message": "Ad updated successfully", "_id": ad_id}), 200
 
 
-# 5. Get active ads by date (using ?date=YYYY-MM-DD)
 @ad_sdk_blueprint.route('/ad_sdk/<package_name>', methods=['GET'])
-def get_ads_by_date_or_location(package_name):
+def get_ads_by_date_or_location_or_category(package_name):
     """
-    Get active ads by date or location
+    Get active ads by date, location, or category
     ---
     parameters:
       - name: package_name
@@ -265,6 +264,10 @@ def get_ads_by_date_or_location(package_name):
         required: false
         type: string
       - name: location
+        in: query
+        required: false
+        type: string
+      - name: category
         in: query
         required: false
         type: string
@@ -283,7 +286,7 @@ def get_ads_by_date_or_location(package_name):
         try:
             filter_date = datetime.datetime.strptime(request.args.get('date'), '%Y-%m-%d')
         except ValueError:
-            return jsonify({"error": "Invalid date format"}), 400
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
 
     query["beginning_date"] = {"$lte": filter_date}
     query["expiration_date"] = {"$gte": filter_date}
@@ -291,10 +294,14 @@ def get_ads_by_date_or_location(package_name):
     if 'location' in request.args:
         query["ad_location"] = request.args.get('location')
 
+    if 'category' in request.args:
+        query["category"] = request.args.get('category')
+
     ads = list(db[package_name].find(query))
     for ad in ads:
         ad['_id'] = str(ad['_id'])
     return jsonify(ads), 200
+
 
 
 # 6. Delete all ads
@@ -310,5 +317,6 @@ def delete_all_ads():
     if db is None:
         return jsonify({"error": "Database connection error"}), 500
 
-    db['Ads'].delete_many({})
+    for name in db.list_collection_names():
+        db['Ads'].delete_many({})
     return jsonify({"message": "All ads deleted successfully"}), 200
