@@ -26,7 +26,9 @@ def create_ad():
             - expiration_date
             - ad_location
             - ad_link
+            - category
             - ad_image_link
+          
           properties:
             package_name:
               type: string
@@ -52,6 +54,10 @@ def create_ad():
             ad_link:
               type: string
               description: "Link to the ad content"
+            category:
+              type: string
+              enum: ["Hotel", "Restaurant", "Attraction", "Shop", "Product"]
+              description: "Hotel / Restaurant  / Attraction / Shop / Product"
             ad_image_link:
               type: string
               description: "Link to the ad url"
@@ -73,7 +79,7 @@ def create_ad():
     # Required fields check
     required_fields = [
         'package_name', 'name', 'description', 'ad_type',
-        'beginning_date', 'expiration_date', 'ad_location', 'ad_link', 'ad_image_link'
+        'beginning_date', 'expiration_date', 'ad_location', 'ad_link','category', 'ad_image_link'
     ]
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
@@ -87,11 +93,17 @@ def create_ad():
 
     if begin > expire:
         return jsonify({"error": "Beginning date must be before expiration date"}), 400
+    
+    valid_categories = ['Hotel', 'Restaurant', 'Attraction', 'Shop' , 'Product']
+    if data['category'] not in valid_categories:
+        return jsonify({"error": "Invalid category. Must be one of: Hotel, Restaurant, Attraction, Shop, Product"}), 400
+
 
     # Create the ad item
     ad_item = {
         "_id": str(uuid.uuid4()),
         "package_name": data['package_name'],
+        "category": data['category'],
         "name": data['name'],
         "description": data['description'],
         "ad_type": data['ad_type'],
@@ -184,12 +196,13 @@ def update_ad(package_name, ad_id):
           id: Ad
           properties:
             name: {type: string}
-            dicription: {type: string}
+            description: {type: string}
             ad_type: {type: string}
             beginning_date: {type: string}
             expiration_date: {type: string}
             ad_location: {type: string}
             ad_link: {type: string}
+            category: {type: string}
             ad_image_link: {type: string}
     responses:
       200: {description: Ad updated}
@@ -202,7 +215,7 @@ def update_ad(package_name, ad_id):
     data = request.get_json()
     update_fields = {}
 
-    for field in ['name', 'dicription', 'ad_type', 'ad_location', 'ad_link', 'ad_image_link']:
+    for field in ['name', 'description', 'ad_type', 'ad_location', 'ad_link', 'category', 'ad_image_link']:
         if field in data:
             update_fields[field] = data[field]
 
@@ -218,17 +231,22 @@ def update_ad(package_name, ad_id):
         if update_fields['beginning_date'] > update_fields['expiration_date']:
             return jsonify({"error": "Beginning date must be before expiration date"}), 400
         
-
+    if 'ad_image_link' in update_fields and not update_fields['ad_image_link'].startswith('http'):
+        return jsonify({"error": "Invalid ad_image_link URL"}), 400
+    
+    valid_categories = ['Hotel', 'Restaurant', 'Attraction', 'Shop', 'Product']
+    if 'category' in data and data['category'] not in valid_categories:
+        return jsonify({
+        "error": f"Invalid category. Must be one of: {', '.join(valid_categories)}" }), 400
+    
     update_fields['updated_at'] = datetime.datetime.now()
     result = db[package_name].update_one({"_id": ad_id}, {"$set": update_fields})
+
 
     if result.matched_count == 0:
         return jsonify({"error": "Ad not found"}), 404
     
-    if 'ad_image_link' in update_fields and not update_fields['ad_image_link'].startswith('http'):
-        return jsonify({"error": "Invalid ad_image_link URL"}), 400
-
-
+  
     return jsonify({"message": "Ad updated successfully", "_id": ad_id}), 200
 
 
@@ -283,7 +301,7 @@ def get_ads_by_date_or_location(package_name):
 @ad_sdk_blueprint.route('/ad_sdk', methods=['DELETE'])
 def delete_all_ads():
     """
-    Delete all ads from all packages
+    Delete all ads from package - Ads
     ---
     responses:
       200: {description: All ads deleted}
@@ -292,6 +310,5 @@ def delete_all_ads():
     if db is None:
         return jsonify({"error": "Database connection error"}), 500
 
-    for name in db.list_collection_names():
-        db[name].delete_many({})
+    db['Ads'].delete_many({})
     return jsonify({"message": "All ads deleted successfully"}), 200
