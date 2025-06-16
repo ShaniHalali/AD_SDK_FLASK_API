@@ -320,3 +320,109 @@ def delete_all_ads():
     for name in db.list_collection_names():
         db['Ads'].delete_many({})
     return jsonify({"message": "All ads deleted successfully"}), 200
+
+
+#---------------- Application Information -------------------------#
+
+#1. update clicks per ad in a spesific app
+@ad_sdk_blueprint.route('/ad_sdk/<ad_id>/click', methods=['POST'])
+def record_ad_click(ad_id):
+    package_name = request.args.get("package_name")
+    if not package_name:
+        return jsonify({"error": "Missing package_name parameter"}), 400
+
+    db = MongoConnectionManager.get_db()
+    stats_collection = db["AdClickStats"]
+
+    now = datetime.datetime.utcnow()
+
+    try:
+        result = stats_collection.update_one(
+            {"ad_id": ad_id, "package_name": package_name},
+            {
+                "$inc": {"clicks_count": 1},
+                "$setOnInsert": {
+                    "views_count": 0,
+                    "completed_views_count": 0,
+                    "created_at": now
+                },
+                "$set": {"last_clicked_at": now}
+            },
+            upsert=True
+        )
+
+        return jsonify({
+            "message": "Click recorded successfully",
+            "upserted": result.upserted_id is not None
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#2 . Update views count 
+@ad_sdk_blueprint.route('/ad_sdk/<ad_id>/view', methods=['POST'])
+def record_ad_view(ad_id):
+    package_name = request.args.get("package_name")
+    if not package_name:
+        return jsonify({"error": "Missing package_name parameter"}), 400
+
+    db = MongoConnectionManager.get_db()
+    stats_collection = db["AdClickStats"]
+
+    now = datetime.datetime.utcnow()
+
+    try:
+        result = stats_collection.update_one(
+            {"ad_id": ad_id, "package_name": package_name},
+            {
+                "$inc": {"views_count": 1},
+                "$setOnInsert": {
+                    "clicks_count": 0,
+                    "completed_views_count": 0,
+                    "created_at": now
+                }
+            },
+            upsert=True
+        )
+
+        return jsonify({
+            "message": "View recorded successfully",
+            "upserted": result.upserted_id is not None
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#3 Update - for ads videos - count of completed views
+@ad_sdk_blueprint.route('/ad_sdk/<ad_id>/view/completed', methods=['POST'])
+def record_completed_view(ad_id):
+    package_name = request.args.get("package_name")
+    if not package_name:
+        return jsonify({"error": "Missing package_name parameter"}), 400
+
+    db = MongoConnectionManager.get_db()
+    stats_collection = db["AdClickStats"]
+
+    now = datetime.datetime.utcnow()
+
+    try:
+        result = stats_collection.update_one(
+            {"ad_id": ad_id, "package_name": package_name},
+            {
+                "$inc": {"completed_views_count": 1},
+                "$setOnInsert": {
+                    "clicks_count": 0,
+                    "views_count": 0,
+                    "created_at": now
+                }
+            },
+            upsert=True
+        )
+
+        return jsonify({
+            "message": "Completed view recorded successfully",
+            "upserted": result.upserted_id is not None
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

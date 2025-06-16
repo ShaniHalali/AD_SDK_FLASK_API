@@ -33,6 +33,12 @@ class MongoConnectionManager:
                 print("Pinged your deployment. You successfully connected to MongoDB!")
 
                 MongoConnectionManager.__db = client[DB_NAME]
+
+                # Create a unique index on (ad_id, package_name) once
+                MongoConnectionManager.__db['AdClickStats'].create_index(
+                    [("ad_id", 1), ("package_name", 1)], unique=True
+                )
+
             except Exception as e:
                 print(e)
 
