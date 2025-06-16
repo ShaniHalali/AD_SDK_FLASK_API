@@ -326,7 +326,30 @@ def delete_all_ads():
 
 #1. update clicks per ad in a spesific app
 @ad_sdk_blueprint.route('/ad_sdk/<ad_id>/click', methods=['POST'])
-def record_ad_click(ad_id):
+def record_ad_click(ad_id):  
+    """
+    Record a click for a specific ad in a specific app
+    ---
+    parameters:
+      - name: ad_id
+        in: path
+        type: string
+        required: true
+        description: The ID of the ad
+      - name: package_name
+        in: query
+        type: string
+        required: true
+        description: The app's package name reporting the click
+    responses:
+      200:
+        description: Click recorded successfully
+      400:
+        description: Missing package_name parameter
+      500:
+        description: Internal server error
+    """
+    
     package_name = request.args.get("package_name")
     if not package_name:
         return jsonify({"error": "Missing package_name parameter"}), 400
@@ -362,6 +385,29 @@ def record_ad_click(ad_id):
 #2 . Update views count 
 @ad_sdk_blueprint.route('/ad_sdk/<ad_id>/view', methods=['POST'])
 def record_ad_view(ad_id):
+    """
+    Record a view for a specific ad in a specific app
+    ---
+    parameters:
+      - name: ad_id
+        in: path
+        type: string
+        required: true
+        description: The ID of the ad
+      - name: package_name
+        in: query
+        type: string
+        required: true
+        description: The app's package name reporting the view
+    responses:
+      200:
+        description: View recorded successfully
+      400:
+        description: Missing package_name parameter
+      500:
+        description: Internal server error
+    """
+
     package_name = request.args.get("package_name")
     if not package_name:
         return jsonify({"error": "Missing package_name parameter"}), 400
@@ -396,6 +442,29 @@ def record_ad_view(ad_id):
 #3 Update - for ads videos - count of completed views
 @ad_sdk_blueprint.route('/ad_sdk/<ad_id>/view/completed', methods=['POST'])
 def record_completed_view(ad_id):
+    """
+    Record a completed view for a video ad in a specific app
+    ---
+    parameters:
+      - name: ad_id
+        in: path
+        type: string
+        required: true
+        description: The ID of the ad
+      - name: package_name
+        in: query
+        type: string
+        required: true
+        description: The app's package name reporting the completed view
+    responses:
+      200:
+        description: Completed view recorded successfully
+      400:
+        description: Missing package_name parameter
+      500:
+        description: Internal server error
+    """
+
     package_name = request.args.get("package_name")
     if not package_name:
         return jsonify({"error": "Missing package_name parameter"}), 400
