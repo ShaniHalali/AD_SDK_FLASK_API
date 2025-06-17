@@ -327,39 +327,20 @@ def delete_all_ads():
 #1. update clicks per ad in a spesific app
 @ad_sdk_blueprint.route('/ad_sdk/<ad_id>/click', methods=['POST'])
 def record_ad_click(ad_id):  
-    """
-    Record a click for a specific ad in a specific app
-    ---
-    parameters:
-      - name: ad_id
-        in: path
-        type: string
-        required: true
-        description: The ID of the ad
-      - name: package_name
-        in: query
-        type: string
-        required: true
-        description: The app's package name reporting the click
-    responses:
-      200:
-        description: Click recorded successfully
-      400:
-        description: Missing package_name parameter
-      500:
-        description: Internal server error
-    """
-    
     package_name = request.args.get("package_name")
     if not package_name:
         return jsonify({"error": "Missing package_name parameter"}), 400
 
     db = MongoConnectionManager.get_db()
     stats_collection = db["AdClickStats"]
-
+    ads_collection = db["Ads"]
     now = datetime.datetime.utcnow()
 
     try:
+        # שליפת שם הפרסומת מתוך Ads ולא AdClickStats
+        ad_doc = ads_collection.find_one({"_id": ad_id})
+        ad_name = ad_doc["name"] if ad_doc and "name" in ad_doc else "Unknown Ad"
+
         result = stats_collection.update_one(
             {"ad_id": ad_id, "package_name": package_name},
             {
@@ -367,9 +348,13 @@ def record_ad_click(ad_id):
                 "$setOnInsert": {
                     "views_count": 0,
                     "completed_views_count": 0,
-                    "created_at": now
+                    "created_at": now,
+                    "ad_name": ad_name  
                 },
-                "$set": {"last_clicked_at": now}
+                "$set": {
+                    "last_clicked_at": now,
+                    "ad_name": ad_name  
+                }
             },
             upsert=True
         )
@@ -414,10 +399,14 @@ def record_ad_view(ad_id):
 
     db = MongoConnectionManager.get_db()
     stats_collection = db["AdClickStats"]
+    ads_collection = db["Ads"]
 
     now = datetime.datetime.utcnow()
 
     try:
+        ad_doc = ads_collection.find_one({"_id": ad_id})
+        ad_name = ad_doc["name"] if ad_doc and "name" in ad_doc else "Unknown Ad"
+
         result = stats_collection.update_one(
             {"ad_id": ad_id, "package_name": package_name},
             {
@@ -425,7 +414,8 @@ def record_ad_view(ad_id):
                 "$setOnInsert": {
                     "clicks_count": 0,
                     "completed_views_count": 0,
-                    "created_at": now
+                    "created_at": now,
+                    "ad_name": ad_name 
                 }
             },
             upsert=True
@@ -471,10 +461,14 @@ def record_completed_view(ad_id):
 
     db = MongoConnectionManager.get_db()
     stats_collection = db["AdClickStats"]
+    ads_collection = db["Ads"]
 
     now = datetime.datetime.utcnow()
 
     try:
+        ad_doc = ads_collection.find_one({"_id": ad_id})
+        ad_name = ad_doc["name"] if ad_doc and "name" in ad_doc else "Unknown Ad"
+
         result = stats_collection.update_one(
             {"ad_id": ad_id, "package_name": package_name},
             {
@@ -482,7 +476,8 @@ def record_completed_view(ad_id):
                 "$setOnInsert": {
                     "clicks_count": 0,
                     "views_count": 0,
-                    "created_at": now
+                    "created_at": now,
+                    "ad_name": ad_name 
                 }
             },
             upsert=True
