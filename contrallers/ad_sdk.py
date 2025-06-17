@@ -416,7 +416,11 @@ def record_ad_view(ad_id):
                     "completed_views_count": 0,
                     "created_at": now,
                     "ad_name": ad_name 
+                },
+                "$set": {
+                "ad_name": ad_name
                 }
+
             },
             upsert=True
         )
@@ -490,3 +494,35 @@ def record_completed_view(ad_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# 4. Get summarized ad stats
+@ad_sdk_blueprint.route('/ad_sdk/AdClickStats/summary', methods=['GET'])
+def get_ad_click_summary():
+    db = MongoConnectionManager.get_db()
+    if db is None:
+        return jsonify({"error": "Database connection error"}), 500
+
+    stats = db["AdClickStats"].aggregate([
+        {
+            "$group": {
+                "_id": None,
+                "total_clicks": {"$sum": "$clicks_count"},
+                "total_views": {"$sum": "$views_count"},
+                "total_completed_views": {"$sum": "$completed_views_count"}
+            }
+        }
+    ])
+
+    result = next(stats, None)
+    if not result:
+        return jsonify({
+            "total_clicks": 0,
+            "total_views": 0,
+            "total_completed_views": 0
+        }), 200
+
+    return jsonify({
+        "total_clicks": result["total_clicks"],
+        "total_views": result["total_views"],
+        "total_completed_views": result["total_completed_views"]
+    }), 200
