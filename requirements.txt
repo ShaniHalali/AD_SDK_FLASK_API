@@ -2,3 +2,4 @@ flask
 flasgger
 pymongo
 python-dotenv
+flask-cors
