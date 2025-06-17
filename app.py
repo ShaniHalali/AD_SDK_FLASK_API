@@ -1,11 +1,13 @@
 from flask import Flask
 from flasgger import Swagger
+from flask_cors import CORS
 from mongodb_connection_manager import MongoConnectionManager
 from routes import initial_routes
 
 import os
 
 app = Flask(__name__)
+CORS(app)
 Swagger(app)
 MongoConnectionManager.initialize_db()
 initial_routes(app)
