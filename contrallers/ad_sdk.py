@@ -330,14 +330,14 @@ def record_ad_click(ad_id):
     package_name = request.args.get("package_name")
     if not package_name:
         return jsonify({"error": "Missing package_name parameter"}), 400
-
+    
     db = MongoConnectionManager.get_db()
     stats_collection = db["AdClickStats"]
     ads_collection = db["Ads"]
     now = datetime.datetime.utcnow()
 
     try:
-        # שליפת שם הפרסומת מתוך Ads ולא AdClickStats
+        # package name of records = AdClickStats
         ad_doc = ads_collection.find_one({"_id": ad_id})
         ad_name = ad_doc["name"] if ad_doc and "name" in ad_doc else "Unknown Ad"
 
@@ -396,7 +396,11 @@ def record_ad_view(ad_id):
     package_name = request.args.get("package_name")
     if not package_name:
         return jsonify({"error": "Missing package_name parameter"}), 400
-
+    
+    category = request.args.get("category")
+    if not category:
+        return jsonify({"error": "Missing category parameter"}), 400
+    
     db = MongoConnectionManager.get_db()
     stats_collection = db["AdClickStats"]
     ads_collection = db["Ads"]
@@ -408,17 +412,21 @@ def record_ad_view(ad_id):
         ad_name = ad_doc["name"] if ad_doc and "name" in ad_doc else "Unknown Ad"
 
         result = stats_collection.update_one(
-            {"ad_id": ad_id, "package_name": package_name},
+            {"ad_id": ad_id, "package_name": package_name, "category": category},
             {
                 "$inc": {"views_count": 1},
                 "$setOnInsert": {
                     "clicks_count": 0,
                     "completed_views_count": 0,
                     "created_at": now,
-                    "ad_name": ad_name 
+                    "ad_name": ad_name,
+                    "category": category
+ 
                 },
                 "$set": {
-                "ad_name": ad_name
+                "ad_name": ad_name,
+                "category": category
+
                 }
 
             },
