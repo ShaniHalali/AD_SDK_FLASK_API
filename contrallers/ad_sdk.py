@@ -386,6 +386,11 @@ def record_ad_view(ad_id):
         type: string
         required: true
         description: The app's package name reporting the view
+      - name: category
+        in: query
+        type: string
+        required: true
+        description: The ad's category (Hotel, Restaurant, etc.)
     responses:
       200:
         description: View recorded successfully
@@ -402,6 +407,11 @@ def record_ad_view(ad_id):
     category = request.args.get("category")
     if not category:
         return jsonify({"error": "Missing category parameter"}), 400
+    
+    print("===== RECORD VIEW START =====")
+    print("ad_id:", ad_id)
+    print("package_name:", package_name)
+    print("category:", category)
     
     db = MongoConnectionManager.get_db()
     stats_collection = db["AdClickStats"]
@@ -441,6 +451,7 @@ def record_ad_view(ad_id):
         }), 200
 
     except Exception as e:
+        print("⚠️ ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
 #3 Update - for ads videos - count of completed views
@@ -448,6 +459,30 @@ def record_ad_view(ad_id):
 def record_completed_view(ad_id):
     """
     Record a completed view for a video ad in a specific app
+    ---
+    parameters:
+      - name: ad_id
+        in: path
+        type: string
+        required: true
+        description: The ID of the ad
+      - name: package_name
+        in: query
+        type: string
+        required: true
+        description: The app's package name reporting the completed view
+      - name: category
+        in: query
+        type: string
+        required: true
+        description: The ad's category (Hotel, Restaurant, etc.)
+    responses:
+      200:
+        description: Completed view recorded successfully
+      400:
+        description: Missing package_name parameter
+      500:
+        description: Internal server error
     """
     package_name = request.args.get("package_name")
     if not package_name:
