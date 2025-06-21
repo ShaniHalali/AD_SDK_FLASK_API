@@ -337,9 +337,9 @@ def record_ad_click(ad_id):
     now = datetime.datetime.utcnow()
 
     try:
-        # package name of records = AdClickStats
         ad_doc = ads_collection.find_one({"_id": ad_id})
         ad_name = ad_doc["name"] if ad_doc and "name" in ad_doc else "Unknown Ad"
+        category = ad_doc["category"] if ad_doc and "category" in ad_doc else "Unknown"
 
         result = stats_collection.update_one(
             {"ad_id": ad_id, "package_name": package_name},
@@ -349,11 +349,13 @@ def record_ad_click(ad_id):
                     "views_count": 0,
                     "completed_views_count": 0,
                     "created_at": now,
-                    "ad_name": ad_name  
+                    "ad_name": ad_name,
+                    "category": category
                 },
                 "$set": {
                     "last_clicked_at": now,
-                    "ad_name": ad_name  
+                    "ad_name": ad_name,
+                    "category": category
                 }
             },
             upsert=True
@@ -446,27 +448,7 @@ def record_ad_view(ad_id):
 def record_completed_view(ad_id):
     """
     Record a completed view for a video ad in a specific app
-    ---
-    parameters:
-      - name: ad_id
-        in: path
-        type: string
-        required: true
-        description: The ID of the ad
-      - name: package_name
-        in: query
-        type: string
-        required: true
-        description: The app's package name reporting the completed view
-    responses:
-      200:
-        description: Completed view recorded successfully
-      400:
-        description: Missing package_name parameter
-      500:
-        description: Internal server error
     """
-
     package_name = request.args.get("package_name")
     if not package_name:
         return jsonify({"error": "Missing package_name parameter"}), 400
@@ -480,6 +462,7 @@ def record_completed_view(ad_id):
     try:
         ad_doc = ads_collection.find_one({"_id": ad_id})
         ad_name = ad_doc["name"] if ad_doc and "name" in ad_doc else "Unknown Ad"
+        category = ad_doc["category"] if ad_doc and "category" in ad_doc else "Unknown"
 
         result = stats_collection.update_one(
             {"ad_id": ad_id, "package_name": package_name},
@@ -489,7 +472,12 @@ def record_completed_view(ad_id):
                     "clicks_count": 0,
                     "views_count": 0,
                     "created_at": now,
-                    "ad_name": ad_name 
+                    "ad_name": ad_name,
+                    "category": category
+                },
+                "$set": {
+                    "ad_name": ad_name,
+                    "category": category
                 }
             },
             upsert=True
@@ -502,6 +490,7 @@ def record_completed_view(ad_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # 4. Get summarized ad stats
 @ad_sdk_blueprint.route('/ad_sdk/AdClickStats/summary', methods=['GET'])
