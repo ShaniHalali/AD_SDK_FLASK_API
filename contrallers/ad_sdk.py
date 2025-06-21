@@ -349,13 +349,11 @@ def record_ad_click(ad_id):
                     "views_count": 0,
                     "completed_views_count": 0,
                     "created_at": now,
-                    "ad_name": ad_name,
                     "category": category
                 },
                 "$set": {
                     "last_clicked_at": now,
                     "ad_name": ad_name,
-                    "category": category
                 }
             },
             upsert=True
@@ -367,6 +365,7 @@ def record_ad_click(ad_id):
         }), 200
 
     except Exception as e:
+        print("⚠️ ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
 #2 . Update views count 
@@ -431,13 +430,11 @@ def record_ad_view(ad_id):
                     "clicks_count": 0,
                     "completed_views_count": 0,
                     "created_at": now,
-                    "ad_name": ad_name,
                     "category": category
  
                 },
                 "$set": {
                 "ad_name": ad_name,
-                "category": category
 
                 }
 
@@ -507,12 +504,10 @@ def record_completed_view(ad_id):
                     "clicks_count": 0,
                     "views_count": 0,
                     "created_at": now,
-                    "ad_name": ad_name,
                     "category": category
                 },
                 "$set": {
-                    "ad_name": ad_name,
-                    "category": category
+                    "ad_name": ad_name
                 }
             },
             upsert=True
@@ -524,6 +519,7 @@ def record_completed_view(ad_id):
         }), 200
 
     except Exception as e:
+        print("⚠️ ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
