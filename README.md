@@ -46,6 +46,17 @@ It provides a set of RESTful API endpoints to manage, filter, and track smart ad
 | `/ad_sdk/<ad_id>/view/completed?package_name=...`           | POST   | Record a completed view (for video ads)                         |
 | `/ad_sdk/AdClickStats/summary`                              | GET    | Get global stats: total clicks, views, completed views          |
 
+## 🔗 Related Projects
+- [SDK ADS Android Library](https://github.com/ShaniHalali/SDK_ADS_Android_Library)   
+  Android library that displays dynamic ads based on city and category.  
+  Includes built-in support for video/image ads, event tracking, and developer-friendly integration.
+  
+- [Ads Dashboard Portal](https://portal-ads-dashboard-react-typejs.vercel.app/)
+A dashboard interface to visualize aggregated ad performance (clicks, views, completed views) in real time.   
+You can find more details and documentation on [*Ads portal repository*](https://github.com/ShaniHalali/Portal_ads_dashboard_REACT_TYPEJS)
+
+
+
 ---
 
 ## 🧪 Example Request: Create Ad
